@@ -15,6 +15,7 @@ namespace img_to_ascii
             bool isScaleDown = true;
             double clampStrength = 7;
             int charHeightRatio = 2;
+            string interpolation = "average";
 
             while (loop)
             {
@@ -55,7 +56,7 @@ namespace img_to_ascii
                             Bitmap originalImage = new Bitmap(imagePath);
 
                             //Convert the image
-                            string asciiOutput = ConvertToAscii(originalImage, scaleFactor, isScaleDown, clampStrength, charHeightRatio);
+                            string asciiOutput = ConvertToAscii(originalImage, scaleFactor, isScaleDown, clampStrength, charHeightRatio, interpolation);
 
                             //Save the ascii output
                             string outputPath = "Ascii_" + System.IO.Path.GetFileNameWithoutExtension(imagePath) + ".txt";
@@ -66,6 +67,8 @@ namespace img_to_ascii
                             }
 
                             Console.WriteLine("\nAscii saved to: " + outputPath);
+
+                            originalImage.Dispose();
                         }
                         catch (Exception e)
                         {
@@ -82,8 +85,9 @@ namespace img_to_ascii
                             Console.WriteLine("2. Scale Direction:           " + (isScaleDown ? "Scale Down" : "Scale Up"));
                             Console.WriteLine("3. Clamp Strength:            " + clampStrength);
                             Console.WriteLine("4. Character Height Ratio:    " + charHeightRatio);
+                            Console.WriteLine("5. Interpolation Type:        " + interpolation);
                             Console.WriteLine();
-                            Console.WriteLine("5. Back");
+                            Console.WriteLine("6. Back");
 
                             input = Console.ReadLine();
 
@@ -147,7 +151,7 @@ namespace img_to_ascii
 
                                     break;
                                 case 3:
-                                    Console.WriteLine("What would you like to change the clamp strength to?");
+                                    Console.WriteLine("What would you like to change the clamp strength to?\nNegative numbers will invert the image. Zero means the image will be linear.");
                                     input = Console.ReadLine();
 
                                     try
@@ -179,6 +183,44 @@ namespace img_to_ascii
                                     charHeightRatio = inputConverted;
                                     break;
                                 case 5:
+                                    Console.WriteLine("What interpolation type would you like to use?");
+                                    Console.WriteLine("1. Average");
+                                    Console.WriteLine("2. Min");
+                                    Console.WriteLine("3. Max");
+                                    Console.WriteLine("4. Single pixel");
+
+                                    input = Console.ReadLine();
+
+                                    try
+                                    {
+                                        inputConverted = Convert.ToInt32(input);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        Console.WriteLine("\nInput was not a interger. Please try again.");
+                                        continue;
+                                    }
+
+                                    switch (inputConverted)
+                                    {
+                                        case 1:
+                                            interpolation = "average";
+                                            break;
+                                        case 2:
+                                            interpolation = "min";
+                                            break;
+                                        case 3:
+                                            interpolation = "max";
+                                            break;
+                                        case 4:
+                                            interpolation = "pixel";
+                                            break;
+                                        default:
+                                            Console.WriteLine("Input was not valid. Please try again.");
+                                            break;
+                                    }
+                                    break;
+                                case 6:
                                     loopSettings = false;
                                     break;
                                 default:
@@ -197,19 +239,20 @@ namespace img_to_ascii
             }
         }
 
-        static string ConvertToAscii(Bitmap original, int scaleFactor, bool isScaleDown, double clampStrength, double charHeightRatio)
+        static string ConvertToAscii(Bitmap original, int scaleFactor, bool isScaleDown, double clampStrength, double charHeightRatio, string interpolation)
         {
             StringBuilder output = new StringBuilder();
 
             if (isScaleDown)
             {
-                // Convert each group of pixels to greyscale
                 for (int y = 0; y < original.Height; y += scaleFactor)
                 {
                     for (int x = 0; x < original.Width; x += scaleFactor)
                     {
-                        double pixelValue = GetGreyscaleAverage(original, x, y, scaleFactor);
+                        //Convert each group of pixels to greyscale
+                        double pixelValue = GetGreyscaleAverage(original, x, y, scaleFactor, interpolation);
 
+                        //Convert the greyscale value to an Ascii character
                         char character = valueToAscii(pixelValue, clampStrength);
 
                         for (int i = 0; i < charHeightRatio; i++)
@@ -227,7 +270,7 @@ namespace img_to_ascii
                     StringBuilder line = new StringBuilder();
                     for (int x = 0; x < original.Width; x++)
                     {
-                        double pixelValue = GetGreyscaleAverage(original, x, y, 1);
+                        double pixelValue = GetGreyscaleAverage(original, x, y, 1, interpolation);
 
                         char character = valueToAscii(pixelValue, clampStrength);
 
@@ -248,26 +291,76 @@ namespace img_to_ascii
             return output.ToString();
         }
 
-        static double GetGreyscaleAverage(Bitmap original, int x, int y, int size)
+        static double GetGreyscaleAverage(Bitmap original, int x, int y, int size, string interpolation)
         {
-            int countedPixels = 0;
-            double total = 0;
-
-            for (int i = 0; i < size; i++)
+            Color originalColor = original.GetPixel(x, y);
+            switch (interpolation)
             {
-                for (int j = 0; j < size; j++)
-                {
-                    if (y + i >= original.Height) break;
-                    if (x + j >= original.Width) break;
+                case "average":
+                    int countedPixels = 0;
+                    double total = 0;
 
-                    countedPixels++;
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (y + i >= original.Height) break;
+                            if (x + j >= original.Width) break;
 
-                    Color originalColor = original.GetPixel(x + j, y + i);
-                    total += (originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114);
-                }
+                            countedPixels++;
+
+                            originalColor = original.GetPixel(x + j, y + i);
+                            total += (originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114);
+                        }
+                    }
+
+                    return total / countedPixels;
+
+                case "min":
+                    double min = 256;
+
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (y + i >= original.Height) break;
+                            if (x + j >= original.Width) break;
+
+                            originalColor = original.GetPixel(x + j, y + i);
+                            min = Math.Min((originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114), min);
+                        }
+                    }
+
+                    return min;
+
+                case "max":
+                    double max = -1;
+
+                    for (int i = 0; i < size; i++)
+                    {
+                        for (int j = 0; j < size; j++)
+                        {
+                            if (y + i >= original.Height) break;
+                            if (x + j >= original.Width) break;
+
+                            originalColor = original.GetPixel(x + j, y + i);
+                            max = Math.Max((originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114), max);
+                        }
+                    }
+
+                    return max;
+
+                case "pixel":
+                    x += size / 2;
+                    y += size / 2;
+                    originalColor = original.GetPixel(x, y);
+
+                    return (originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114);
+
+                default:
+                    return 0;
+
             }
-
-            return total / countedPixels;
         }
 
         static char valueToAscii(double value, double clampStrength)
@@ -277,10 +370,15 @@ namespace img_to_ascii
 
             value /= 255;
 
-            value = 1 - value;
-
-            //Number clamping thing
-            value = 0.5 / Math.Atan(0.5 * clampStrength) * Math.Atan(clampStrength * (value - 0.5)) + 0.5;
+            if (clampStrength > 0)
+            {
+                value = 1 - value;
+                value = 0.5 / Math.Atan(0.5 * clampStrength) * Math.Atan(clampStrength * (value - 0.5)) + 0.5;
+            }
+            else if (clampStrength < 0)
+            {
+                value = 0.5 / Math.Atan(0.5 * clampStrength) * Math.Atan(clampStrength * (value - 0.5)) + 0.5;
+            }
 
             for (int i = 0; i < weights.Length; i++)
             {
