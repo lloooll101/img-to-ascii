@@ -32,7 +32,7 @@ namespace img_to_ascii
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine("\nInput was not a interger. Please try again.");
+                    Console.WriteLine("\nInput was not a integer. Please try again.");
                     continue;
                 }
 
@@ -93,7 +93,7 @@ namespace img_to_ascii
                             }
                             catch (Exception ex)
                             {
-                                Console.WriteLine("\nInput was not a interger. Please try again.");
+                                Console.WriteLine("\nInput was not a integer. Please try again.");
                                 continue;
                             }
 
@@ -109,7 +109,7 @@ namespace img_to_ascii
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine("\nInput was not a interger. Please try again.");
+                                        Console.WriteLine("\nInput was not a integer. Please try again.");
                                         continue;
                                     }
 
@@ -128,7 +128,7 @@ namespace img_to_ascii
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine("\nInput was not a interger. Please try again.");
+                                        Console.WriteLine("\nInput was not a integer. Please try again.");
                                         continue;
                                     }
 
@@ -156,7 +156,7 @@ namespace img_to_ascii
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine("\nInput was not a interger. Please try again.");
+                                        Console.WriteLine("\nInput was not a integer. Please try again.");
                                         continue;
                                     }
 
@@ -172,7 +172,7 @@ namespace img_to_ascii
                                     }
                                     catch (Exception ex)
                                     {
-                                        Console.WriteLine("\nInput was not a interger. Please try again.");
+                                        Console.WriteLine("\nInput was not a integer. Please try again.");
                                         continue;
                                     }
 
