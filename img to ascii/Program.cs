@@ -353,6 +353,9 @@ namespace img_to_ascii
                 case "pixel":
                     x += size / 2;
                     y += size / 2;
+
+                    if (y >= original.Height) return 0;
+                    if (x >= original.Width) return 0;
                     originalColor = original.GetPixel(x, y);
 
                     return (originalColor.R * 0.299 + originalColor.G * 0.587 + originalColor.B * 0.114);
@@ -378,6 +381,10 @@ namespace img_to_ascii
             else if (clampStrength < 0)
             {
                 value = 0.5 / Math.Atan(0.5 * clampStrength) * Math.Atan(clampStrength * (value - 0.5)) + 0.5;
+            }
+            else
+            {
+                value = 1 - value;
             }
 
             for (int i = 0; i < weights.Length; i++)
